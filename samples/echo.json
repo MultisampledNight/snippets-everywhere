@@ -1,1 +1,23 @@
-[{"trigger":"written","description":null,"replacement":"replaced","options":"tAw","priority":null},{"trigger":"a","description":null,"replacement":"b","options":"tA","priority":null},{"trigger":"written","description":null,"replacement":"conflict","options":null,"priority":null}]
+[
+  {
+    "trigger": "written",
+    "description": null,
+    "replacement": "replaced",
+    "options": "tAw",
+    "priority": null
+  },
+  {
+    "trigger": "a",
+    "description": null,
+    "replacement": "b",
+    "options": "tA",
+    "priority": null
+  },
+  {
+    "trigger": "written",
+    "description": null,
+    "replacement": "conflict",
+    "options": null,
+    "priority": null
+  }
+]

@@ -66,13 +66,13 @@ impl TryFrom<ui::Input> for InputDesc {
         // order doesn't matter since `cmdline` accepts only one kind of input -- at least atm
         if let Some(path) = config.ols_in {
             Ok(Self::Ols(fs::read_to_string(&path).with_context(|| {
-                format!("could not read OLS snippet file at {}", path.display())
+                format!("Error reading OLS snippet file at {}", path.display())
             })?))
         } else if let Some(path) = config.ultisnips_in {
             Ok(Self::UltiSnips(fs::read_to_string(&path).with_context(
                 || {
                     format!(
-                        "could not read UltiSnips snippet file at {}",
+                        "Error reading UltiSnips snippet file at {}",
                         path.display()
                     )
                 },
