@@ -31,7 +31,7 @@ pub fn serialize(snippets: &SnippetFile) -> Result<String, SerializeError> {
 fn write_and_update_priority(output: &mut String, last_priority: &mut i64, priority: Option<i64>) {
     let priority = priority.unwrap_or(0);
     if priority == *last_priority {
-        return;  // last priority still applies
+        return; // last priority still applies
     }
 
     writeln!(output, "priority {priority}").unwrap();
