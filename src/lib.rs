@@ -10,6 +10,7 @@ pub fn run() -> Result<(), anyhow::Error> {
     let backends = backends::all();
 
     let cmdline = ui::cmdline(&backends);
+    dbg!(&cmdline);
     let backend_selection = BackendSelection::from_matches(cmdline, &backends);
     dbg!(backend_selection);
 
