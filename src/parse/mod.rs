@@ -2,11 +2,11 @@ mod ols;
 
 use thiserror::Error;
 
-use crate::{InputKind, SnippetFile};
+use crate::{InputDesc, SnippetFile};
 
-pub fn parse(input: InputKind) -> Result<SnippetFile, Error> {
+pub fn parse(input: InputDesc) -> Result<SnippetFile, Error> {
     match input {
-        InputKind::Ols(unparsed) => ols::parse(unparsed).map_err(Into::into),
+        InputDesc::Ols(unparsed) => ols::parse(unparsed).map_err(Into::into),
         _ => todo!(),
     }
 }

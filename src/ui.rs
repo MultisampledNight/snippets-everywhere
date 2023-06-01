@@ -36,9 +36,9 @@ pub struct Output {
     /// Path of an Obsidian LaTeX suite snippet file to write **to**. This is again _not_
     /// directly the `data.json` of OLS in the vault.
     #[arg(long, required_unless_present = "ultisnips_out")]
-    ols_out: Option<PathBuf>,
+    pub ols_out: Option<PathBuf>,
 
     /// Path of an UltiSnips snippet file to write **to**.
     #[arg(long, required_unless_present = "ols_out")]
-    ultisnips_out: Option<PathBuf>,
+    pub ultisnips_out: Option<PathBuf>,
 }
