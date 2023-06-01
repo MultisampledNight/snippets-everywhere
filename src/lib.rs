@@ -1,42 +1,19 @@
 use std::{collections::HashMap, fs, io, path::PathBuf};
 
 use anyhow::Context;
+use clap::ArgMatches;
 use serde::{Deserialize, Serialize};
-use thiserror::Error;
 
-mod parse;
-mod serialize;
-mod ui;
+pub mod backends;
+pub mod ui;
 
-pub fn run() -> Result<(), RunError> {
-    let cmdline = ui::cmdline();
+pub fn run() -> Result<(), anyhow::Error> {
+    let backends = backends::all();
 
-    let input = InputDesc::try_from(cmdline.input).map_err(RunError::ReadInputError)?;
-    let ir = parse::parse(input)?;
+    let cmdline = ui::cmdline(&backends);
+    let backend_selection = BackendSelection::from_matches(cmdline, &backends);
 
-    let output = OutputDesc::from(cmdline.output);
-    for (backend, path) in output.targets {
-        // fault tolerance? easy to implement, but I don't see the the use here
-        let repr = serialize::serialize(backend, &ir)?;
-        fs::write(&path, repr).map_err(|orig| RunError::WriteOutputError { path, orig })?;
-    }
-
-    Ok(())
-}
-
-#[derive(Debug, Error)]
-pub enum RunError {
-    #[error("Could not read input files: {0}")]
-    ReadInputError(anyhow::Error),
-
-    #[error("Parsing failed: {0}")]
-    Parse(#[from] parse::Error),
-
-    #[error("Serialization failed: {0}")]
-    Serialize(#[from] serialize::Error),
-
-    #[error("Could not write output file {}: {orig}", .path.display())]
-    WriteOutputError { path: PathBuf, orig: io::Error },
+    todo!()
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -47,59 +24,54 @@ pub struct SnippetFile {
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Snippet {
     trigger: String,
-    description: Option<String>,
     replacement: String,
     options: Option<String>,
+    description: Option<String>,
     priority: Option<i64>,
 }
 
-#[derive(Debug)]
-pub enum InputDesc {
-    Ols(String),
-    UltiSnips(String),
+pub trait Backend {
+    /// Tries parsing the given input into _the IR:tm:_.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the backend doesn't actually support deserializing.
+    fn deserialize(&self, input: String) -> Result<SnippetFile, anyhow::Error>;
+    fn supports_deserialization(&self) -> bool;
+
+    /// Tries writing _the IR:tm:_ into a string.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the backend doesn't actually support deserializing.
+    fn serialize(&self, snippets: SnippetFile) -> Result<String, anyhow::Error>;
+    fn supports_serialization(&self) -> bool;
+
+    /// The name of this backend, ideally an all-lowercase, short identifier.
+    fn name(&self) -> &'static str;
 }
 
-impl TryFrom<ui::Input> for InputDesc {
-    type Error = anyhow::Error;
-
-    fn try_from(config: ui::Input) -> Result<Self, Self::Error> {
-        // order doesn't matter since `cmdline` accepts only one kind of input -- at least atm
-        if let Some(path) = config.ols_in {
-            Ok(Self::Ols(fs::read_to_string(&path).with_context(|| {
-                format!("Error reading OLS snippet file at {}", path.display())
-            })?))
-        } else if let Some(path) = config.ultisnips_in {
-            Ok(Self::UltiSnips(fs::read_to_string(&path).with_context(
-                || format!("Error reading UltiSnips snippet file at {}", path.display()),
-            )?))
-        } else {
-            unreachable!("either a new variant without handling has been added or the CLI parsing allows specifying no input")
-        }
-    }
+pub struct BackendSelection<'backends> {
+    pub input: Source<'backends>,
+    pub outputs: Vec<Target<'backends>>,
 }
 
-#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub enum BackendKind {
-    Ols,
-    UltiSnips,
+pub struct Source<'backend> {
+    pub backend: &'backend dyn Backend,
+    pub path: PathBuf,
 }
 
-pub struct OutputDesc {
-    targets: HashMap<BackendKind, PathBuf>,
+pub struct Target<'backend> {
+    pub backend: &'backend dyn Backend,
+    pub path: PathBuf,
 }
 
-impl From<ui::Output> for OutputDesc {
-    fn from(config: ui::Output) -> Self {
-        Self {
-            targets: [
-                config.ols_out.map(|path| (BackendKind::Ols, path)),
-                config
-                    .ultisnips_out
-                    .map(|path| (BackendKind::UltiSnips, path)),
-            ]
-            .into_iter()
-            .flatten()
-            .collect(),
-        }
+impl<'backends> BackendSelection<'backends> {
+    /// Constructs a selection of backends to parse from/convert to according to clap.
+    ///
+    /// **Note**: May exhibit very unexpected behavior if the given matches don't have exactly
+    /// one input, or no outputs, but it will not panic or do funny unsafe stuff.
+    pub fn from_matches(matches: ArgMatches, registered: &'backends [Box<dyn Backend>]) -> Self {
+        todo!()
     }
 }
