@@ -1,6 +1,5 @@
-use std::{collections::HashMap, fs, io, path::PathBuf};
+use std::path::PathBuf;
 
-use anyhow::Context;
 use clap::ArgMatches;
 use serde::{Deserialize, Serialize};
 
@@ -12,6 +11,7 @@ pub fn run() -> Result<(), anyhow::Error> {
 
     let cmdline = ui::cmdline(&backends);
     let backend_selection = BackendSelection::from_matches(cmdline, &backends);
+    dbg!(backend_selection);
 
     todo!()
 }
@@ -30,7 +30,7 @@ pub struct Snippet {
     priority: Option<i64>,
 }
 
-pub trait Backend {
+pub trait Backend: std::fmt::Debug {
     /// Tries parsing the given input into _the IR:tm:_.
     ///
     /// # Panics
@@ -51,16 +51,19 @@ pub trait Backend {
     fn name(&self) -> &'static str;
 }
 
+#[derive(Debug)]
 pub struct BackendSelection<'backends> {
     pub input: Source<'backends>,
     pub outputs: Vec<Target<'backends>>,
 }
 
+#[derive(Debug)]
 pub struct Source<'backend> {
     pub backend: &'backend dyn Backend,
     pub path: PathBuf,
 }
 
+#[derive(Debug)]
 pub struct Target<'backend> {
     pub backend: &'backend dyn Backend,
     pub path: PathBuf,
