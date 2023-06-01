@@ -9,10 +9,10 @@ pub fn cmdline() -> Cmdline {
 #[derive(Parser, Debug)]
 pub struct Cmdline {
     #[command(flatten)]
-    input: Input,
+    pub input: Input,
 
     #[command(flatten)]
-    output: Output,
+    pub output: Output,
 }
 
 #[derive(Args, Debug)]
@@ -21,13 +21,13 @@ pub struct Input {
     /// Path of an Obsidian LaTeX suite snippet file to convert **from**.
     /// This is _not_ directly `data.json` in the vault. (though it could be in the future. hm.)
     #[arg(long)]
-    ols_in: Option<PathBuf>,
+    pub ols_in: Option<PathBuf>,
 
     /// Path of an UltiSnips snippet file to convert **from**. Only one at a time.
     /// program repeatedly for more.
     // TODO: actually allow more than only n=1 inputs and concat them
     #[arg(long, required_unless_present = "ols_in")]
-    ultisnips_in: Option<PathBuf>,
+    pub ultisnips_in: Option<PathBuf>,
 }
 
 #[derive(Args, Debug)]
