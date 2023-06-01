@@ -70,12 +70,7 @@ impl TryFrom<ui::Input> for InputDesc {
             })?))
         } else if let Some(path) = config.ultisnips_in {
             Ok(Self::UltiSnips(fs::read_to_string(&path).with_context(
-                || {
-                    format!(
-                        "Error reading UltiSnips snippet file at {}",
-                        path.display()
-                    )
-                },
+                || format!("Error reading UltiSnips snippet file at {}", path.display()),
             )?))
         } else {
             unreachable!("either a new variant without handling has been added or the CLI parsing allows specifying no input")

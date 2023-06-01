@@ -25,7 +25,8 @@ pub struct Input {
 
     /// Path of an UltiSnips snippet file to convert **from**. Only one at a time.
     /// program repeatedly for more.
-    // TODO: actually allow more than only n=1 inputs and concat them
+    // TODO: actually allow more than only n=1 inputs and concat them -- might conflict with the
+    // stateful priority mechanism of the UltiSnips serializer
     #[arg(long, required_unless_present = "ols_in")]
     pub ultisnips_in: Option<PathBuf>,
 }
