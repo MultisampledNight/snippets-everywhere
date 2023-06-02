@@ -17,7 +17,7 @@ impl Backend for Ols {
 
     fn deserialize(&self, input: &str) -> Result<SnippetFile, anyhow::Error> {
         let snippets: Vec<Snippet> =
-            json5::from_str(&input).context("error while parsing OLS snippets")?;
+            json5::from_str(input).context("error while parsing OLS snippets")?;
 
         // filter the mode specifiers since UltiSnips doesn't know them
         let disallowed: HashSet<_> = "tmc".chars().collect();
