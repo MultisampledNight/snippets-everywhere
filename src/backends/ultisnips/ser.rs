@@ -2,29 +2,9 @@ use std::{collections::HashSet, fmt::Write};
 
 use thiserror::Error;
 
-use crate::{Backend, SnippetFile};
+use crate::SnippetFile;
 
-/// Backend for de- and serializing [UltiSnips] snippet files.
-///
-/// [UltiSnips]: https://github.com/SirVer/ultisnips
-#[derive(Debug)]
-pub struct UltiSnips;
-
-impl Backend for UltiSnips {
-    fn name(&self) -> &'static str {
-        "ultisnips"
-    }
-
-    fn name_in(&self) -> Option<String> {
-        // doesn't support parsing... yet
-        None
-    }
-
-    fn deserialize(&self, _input: &str) -> anyhow::Result<SnippetFile> {
-        todo!()
-    }
-
-    fn serialize(&self, snippets: &SnippetFile) -> anyhow::Result<String> {
+pub fn serialize(snippets: &SnippetFile) -> anyhow::Result<String> {
         let mut output = String::new();
         let mut last_priority = 0;
 
@@ -47,7 +27,7 @@ impl Backend for UltiSnips {
 
         Ok(output)
     }
-}
+
 
 fn write_and_update_priority(output: &mut String, last_priority: &mut i64, priority: Option<i64>) {
     let priority = priority.unwrap_or(0);
