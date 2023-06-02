@@ -14,13 +14,13 @@ pub fn run() -> Result<()> {
     let BackendSelection { input, outputs } = BackendSelection::from_matches(cmdline, &backends)?;
 
     let input_file = fs::read_to_string(&input.path)
-        .with_context(|| format!("error reading input for backend `{}`", input.path.display()))?;
+        .with_context(|| format!("error reading input for backend `{}`", input.backend.name()))?;
     let ir = input.backend.deserialize(&input_file)?;
 
     for (path, backend) in outputs.mapping {
         let repr = backend.serialize(&ir)?;
         fs::write(&path, repr)
-            .with_context(|| format!("error writing output for backend `{}`", path.display()))?;
+            .with_context(|| format!("error writing output for backend `{}`", backend.name()))?;
     }
 
     Ok(())
