@@ -93,6 +93,13 @@ fn write_description_and_options(
         write!(output, " \"{}\"", description.unwrap_or(""),).unwrap();
 
         if let Some(options) = options {
+            // filter the mode specifiers since UltiSnips doesn't know them
+            let disallowed: HashSet<_> = "tmc".chars().collect();
+            let options: String = options
+                .chars()
+                .filter(|opt| !disallowed.contains(opt))
+                .collect();
+
             write!(output, " {options}").unwrap();
         }
     }

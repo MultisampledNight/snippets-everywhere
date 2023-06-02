@@ -2,14 +2,14 @@
   {
     "trigger": "written",
     "replacement": "replaced",
-    "options": "Aw",
+    "options": "tAw",
     "description": null,
     "priority": null
   },
   {
     "trigger": "a",
     "replacement": "b",
-    "options": "A",
+    "options": "tA",
     "description": null,
     "priority": null
   },
