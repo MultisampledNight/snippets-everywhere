@@ -34,18 +34,10 @@ impl Backend for Ols {
         Ok(SnippetFile { snippets })
     }
 
-    fn supports_deserialization(&self) -> bool {
-        true
-    }
-
     fn serialize(&self, snippets: SnippetFile) -> Result<String, anyhow::Error> {
         // json5 also has a to_string function, but nothing for pretty printing
         // not sure if pretty printing is actually needed tbh, likely it's only to be read by
         // the program anyway
         serde_json::to_string_pretty(&snippets.snippets).map_err(Into::into)
-    }
-
-    fn supports_serialization(&self) -> bool {
-        true
     }
 }
