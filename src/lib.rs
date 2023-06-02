@@ -1,6 +1,6 @@
 use std::{collections::HashMap, path::PathBuf};
 
-use anyhow::Result;
+use anyhow::{anyhow, Result};
 use clap::ArgMatches;
 use serde::{Deserialize, Serialize};
 
@@ -84,18 +84,56 @@ pub struct Targets<'backends> {
 impl<'backends> BackendSelection<'backends> {
     /// Constructs a selection of backends to parse from/convert to according to clap.
     ///
-    /// **Note**: May exhibit very unexpected behavior if the given matches don't have exactly
-    /// one input, or no outputs, but it will not panic or do funny unsafe stuff.
-    ///
     /// # Errors
     ///
     /// Returns an error if multiple output backends point to the same file.
+    ///
+    /// # Panics
+    ///
+    /// May exhibit very unexpected behavior, including panics, if the given matches don't have
+    /// exactly one input, or no outputs, but it will not do funny unsafe stuff.
     pub fn from_matches(
         matches: ArgMatches,
         registered: &'backends [Box<dyn Backend>],
     ) -> Result<Self> {
-        let input = registered.iter().find(|backend| todo!());
+        let input = registered
+            .iter()
+            .find_map(|backend| {
+                backend
+                    .name_in()
+                    .and_then(|name| matches.get_one(&name))
+                    .map(|path: &PathBuf| Source {
+                        backend: backend.as_ref(),
+                        path: path.clone(),
+                    })
+            })
+            .unwrap();
 
-        todo!()
+        let outputs = registered
+            .iter()
+            .filter_map(|backend| {
+                backend
+                    .name_out()
+                    .and_then(|name| matches.get_one(&name))
+                    .map(|path: &PathBuf| (path.clone(), backend.as_ref()))
+            })
+            // not ideal, but only (?) way to keep the iterator pattern while catching duplicates
+            .try_fold(HashMap::new(), |mut map, (path, backend)| {
+                if let Some(previous) = map.insert(path.clone(), backend) {
+                    return Err(anyhow!(
+                        "both backends `{}` and `{}` were given {} as path to write to, they'd overwrite each other. please use different paths for ",
+                        previous.name(),
+                        backend.name(),
+                        path.display(),
+                    ));
+                }
+
+                Ok(map)
+            })?;
+
+        Ok(Self {
+            input,
+            outputs: Targets { mapping: outputs },
+        })
     }
 }
