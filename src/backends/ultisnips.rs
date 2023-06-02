@@ -68,7 +68,7 @@ fn write_trigger(output: &mut String, trigger: &str) -> Result<(), SerializeErro
     // uuuuuh okay we need to quote in some way, let's find something sane
     // ...looking at _handle_snippets_or_global in the ultisnips source code,
     // actually any character is fine
-    let possible_quotes = "\"'#!?%|/^~=&:,$&¢αβγδμ´¹²³";
+    let possible_quotes = "\"'#!?%|/^~=&:,$&¢αβγδμ´¹²³ඞ";
     let chars_in_trigger: HashSet<_> = trigger.chars().collect();
 
     if let Some(quote) = possible_quotes
