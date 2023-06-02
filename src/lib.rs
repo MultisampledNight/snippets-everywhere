@@ -1,6 +1,6 @@
-use std::{collections::HashMap, path::PathBuf};
+use std::{collections::HashMap, fs, path::PathBuf};
 
-use anyhow::{anyhow, Result};
+use anyhow::{anyhow, Context, Result};
 use clap::ArgMatches;
 use serde::{Deserialize, Serialize};
 
@@ -11,10 +11,19 @@ pub fn run() -> Result<()> {
     let backends = backends::all();
 
     let cmdline = ui::cmdline(&backends);
-    let backend_selection = BackendSelection::from_matches(cmdline, &backends);
-    dbg!(backend_selection);
+    let BackendSelection { input, outputs } = BackendSelection::from_matches(cmdline, &backends)?;
 
-    todo!()
+    let input_file = fs::read_to_string(&input.path)
+        .with_context(|| format!("error reading input for backend `{}`", input.path.display()))?;
+    let ir = input.backend.deserialize(&input_file)?;
+
+    for (path, backend) in outputs.mapping {
+        let repr = backend.serialize(&ir)?;
+        fs::write(&path, repr)
+            .with_context(|| format!("error writing output for backend `{}`", path.display()))?;
+    }
+
+    Ok(())
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -38,7 +47,7 @@ pub trait Backend: std::fmt::Debug {
     ///
     /// Panics if the backend doesn't actually support deserializing. Note to the implementor:
     /// Don't forget to also implement [`Backend::name_in`] to return [`None`] in that case.
-    fn deserialize(&self, input: String) -> Result<SnippetFile>;
+    fn deserialize(&self, input: &str) -> Result<SnippetFile>;
 
     /// Tries writing _the IR:tm:_ into a string.
     ///
@@ -46,7 +55,7 @@ pub trait Backend: std::fmt::Debug {
     ///
     /// Panics if the backend doesn't actually support serializing. Note to the implementor:
     /// Don't forget to also implement [`Backend::name_out`] to return [`None`] in that case.
-    fn serialize(&self, snippets: SnippetFile) -> Result<String>;
+    fn serialize(&self, snippets: &SnippetFile) -> Result<String>;
 
     /// The name of this backend, ideally an all-lowercase, short identifier.
     fn name(&self) -> &'static str;

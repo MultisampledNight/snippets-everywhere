@@ -15,9 +15,9 @@ impl Backend for Ols {
         "ols"
     }
 
-    fn deserialize(&self, input: String) -> Result<SnippetFile, anyhow::Error> {
+    fn deserialize(&self, input: &str) -> Result<SnippetFile, anyhow::Error> {
         let snippets: Vec<Snippet> =
-            json5::from_str(&input).context("Error while parsing OLS snippets")?;
+            json5::from_str(&input).context("error while parsing OLS snippets")?;
 
         // filter the mode specifiers since UltiSnips doesn't know them
         let disallowed: HashSet<_> = "tmc".chars().collect();
@@ -34,7 +34,7 @@ impl Backend for Ols {
         Ok(SnippetFile { snippets })
     }
 
-    fn serialize(&self, snippets: SnippetFile) -> Result<String, anyhow::Error> {
+    fn serialize(&self, snippets: &SnippetFile) -> Result<String, anyhow::Error> {
         // json5 also has a to_string function, but nothing for pretty printing
         // not sure if pretty printing is actually needed tbh, likely it's only to be read by
         // the program anyway

@@ -1,23 +1,23 @@
 [
   {
     "trigger": "written",
-    "description": null,
     "replacement": "replaced",
-    "options": "tAw",
+    "options": "Aw",
+    "description": null,
     "priority": null
   },
   {
     "trigger": "a",
-    "description": null,
     "replacement": "b",
-    "options": "tA",
+    "options": "A",
+    "description": null,
     "priority": null
   },
   {
     "trigger": "written",
-    "description": null,
     "replacement": "conflict",
     "options": null,
+    "description": null,
     "priority": null
   }
 ]
