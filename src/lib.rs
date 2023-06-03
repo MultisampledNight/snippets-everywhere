@@ -128,16 +128,14 @@ impl<'backends> BackendSelection<'backends> {
             })
             // not ideal, but only (?) way to keep the iterator pattern while catching duplicates
             .try_fold(HashMap::new(), |mut map, (path, backend)| {
-                if let Some(previous) = map.insert(path.clone(), backend) {
-                    return Err(anyhow!(
+                map
+                    .insert(path.clone(), backend)
+                    .map_or(Ok(map), |previous| Err(anyhow!(
                         "both backends `{}` and `{}` were given {} as path to write to, they'd overwrite each other. please use different paths for ",
                         previous.name(),
                         backend.name(),
                         path.display(),
-                    ));
-                }
-
-                Ok(map)
+                    )))
             })?;
 
         Ok(Self {

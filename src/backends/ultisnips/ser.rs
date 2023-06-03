@@ -5,29 +5,28 @@ use thiserror::Error;
 use crate::SnippetFile;
 
 pub fn serialize(snippets: &SnippetFile) -> anyhow::Result<String> {
-        let mut output = String::new();
-        let mut last_priority = 0;
+    let mut output = String::new();
+    let mut last_priority = 0;
 
-        for snippet in &snippets.snippets {
-            // very much recommended to look at :h UltiSnips-basic-syntax while reading this
-            write_and_update_priority(&mut output, &mut last_priority, snippet.priority);
+    for snippet in &snippets.snippets {
+        // very much recommended to look at :h UltiSnips-basic-syntax while reading this
+        write_and_update_priority(&mut output, &mut last_priority, snippet.priority);
 
-            write!(output, "snippet").unwrap();
+        write!(output, "snippet").unwrap();
 
-            write_trigger(&mut output, &snippet.trigger)?;
-            write_description_and_options(
-                &mut output,
-                snippet.description.as_deref(),
-                snippet.options.as_deref(),
-            );
+        write_trigger(&mut output, &snippet.trigger)?;
+        write_description_and_options(
+            &mut output,
+            snippet.description.as_deref(),
+            snippet.options.as_deref(),
+        );
 
-            writeln!(output, "\n{}", snippet.replacement).unwrap();
-            writeln!(output, "endsnippet\n").unwrap();
-        }
-
-        Ok(output)
+        writeln!(output, "\n{}", snippet.replacement).unwrap();
+        writeln!(output, "endsnippet\n").unwrap();
     }
 
+    Ok(output)
+}
 
 fn write_and_update_priority(output: &mut String, last_priority: &mut i64, priority: Option<i64>) {
     let priority = priority.unwrap_or(0);

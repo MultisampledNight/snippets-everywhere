@@ -1,10 +1,13 @@
 use chumsky::prelude::*;
 use thiserror::Error;
 
-use crate::{SnippetFile, Snippet};
+use crate::{Snippet, SnippetFile};
 
 pub fn deserialize(input: &str) -> anyhow::Result<SnippetFile> {
-    parser().parse(input).map_err(ParseError).map_err(Into::into)
+    parser()
+        .parse(input)
+        .map_err(ParseError)
+        .map_err(Into::into)
 }
 
 #[derive(Debug, Error)]
