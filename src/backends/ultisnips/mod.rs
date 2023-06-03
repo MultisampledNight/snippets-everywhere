@@ -1,3 +1,4 @@
+mod de;
 mod ser;
 
 use crate::{Backend, SnippetFile};
@@ -13,13 +14,8 @@ impl Backend for UltiSnips {
         "ultisnips"
     }
 
-    fn name_in(&self) -> Option<String> {
-        // doesn't support parsing... yet
-        None
-    }
-
-    fn deserialize(&self, _input: &str) -> anyhow::Result<SnippetFile> {
-        todo!()
+    fn deserialize(&self, input: &str) -> anyhow::Result<SnippetFile> {
+        de::deserialize(input)
     }
 
     fn serialize(&self, snippets: &SnippetFile) -> anyhow::Result<String> {
