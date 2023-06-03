@@ -1,33 +1,19 @@
-use logos::Logos;
+use chumsky::prelude::*;
 use thiserror::Error;
 
-use crate::SnippetFile;
+use crate::{SnippetFile, Snippet};
 
 pub fn deserialize(input: &str) -> anyhow::Result<SnippetFile> {
-    let lex = Token::lexer(input);
-    let _ = dbg!(lex.collect::<Vec<Result<Token, ()>>>());
-
-    todo!()
+    parser().parse(input).map_err(ParseError).map_err(Into::into)
 }
 
 #[derive(Debug, Error)]
-#[error("error(s) parsing UltiSnips snippet file:\n{0:?}")]
-struct ParseError(());
+#[error(
+    "error(s) parsing UltiSnips snippet file:\n{}",
+    .0.into_iter().map(|err| format!("{err}").chars()).flatten().collect::<String>()
+)]
+struct ParseError(Vec<Simple<char>>);
 
-#[derive(Logos, Clone, Debug, PartialEq, Eq)]
-enum Token<'a> {
-    #[token("snippet")]
-    SnippetStart,
-
-    #[regex("\\S+")]
-    Identifier(&'a str),
-
-    #[token("endsnippet")]
-    SnippetEnd,
-
-    #[token("\n")]
-    Newline,
-
-    #[regex(r"([ \t]+|#.*\n)", logos::skip)]
-    Whitespace,
+fn parser() -> impl Parser<char, SnippetFile, Error = Simple<char>> {
+    todo!()
 }
