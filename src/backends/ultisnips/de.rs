@@ -38,7 +38,7 @@ fn parser<'a>() -> impl Parser<'a, &'a str, SnippetFile, extra::Err<Simple<'a, c
     // the quote character can be _anything_ though, and quoting is not necessary
     let quote_end = just('X') // placeholder char -- doesn't matter, will be immediately replaced
         .configure(|cfg, first_ch| cfg.seq(*first_ch));
-    let quoted_trigger = any::<_, extra::Err<Simple<char>>>().then_with_ctx(
+    let quoted_trigger = any().then_with_ctx(
         any()
             // the whitespace check is necessary to find out
             // if that's really been at the end of the word and not in-between
@@ -55,20 +55,18 @@ fn parser<'a>() -> impl Parser<'a, &'a str, SnippetFile, extra::Err<Simple<'a, c
         .repeated()
         .collect::<String>();
 
+    let end = just('\n').then(text::keyword("endsnippet"));
+
     let snippet = text::keyword("snippet")
         .then(text::whitespace().at_least(1))
         .ignore_then(quoted_trigger.or(unquoted_trigger))
         .then_ignore(just('\n'))
         .then(
             any()
-                // interestingly chumsky seems to parse line-by-line implicitly, not expecting
-                // parsers to be interested about multiple lines
-                // "\nendsnippet" never hits because of that I think
-                // need to investigate that more
-                .and_is(text::keyword("endsnippet").not())
+                .and_is(end.clone().not())
                 .repeated()
                 .collect::<String>()
-                .then_ignore(text::keyword("endsnippet")),
+                .then_ignore(end),
         )
         .map(|(trigger, replacement)| Snippet {
             trigger,
