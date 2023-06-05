@@ -33,27 +33,39 @@ struct ParseError<'a>(Vec<Simple<'a, char>>);
 
 fn parser<'a>() -> impl Parser<'a, &'a str, Vec<String>, extra::Err<Simple<'a, char>>> {
     // TODO: `priority n` commands
+    let physical_whitespace = text::whitespace().at_least(1);
+
     // UltiSnips has interesting quote rules: if the first character is the same one as the last
     // one, the trigger is quoted with that char as quote character
     // the quote character can be _anything_ though, and quoting is not necessary
-    let quote_end = just(' ') // placeholder char -- doesn't matter, will be immediately replaced
+    let quote_end = just('X') // placeholder char -- doesn't matter, will be immediately replaced
         .configure(|cfg, first_ch| cfg.seq(*first_ch));
-    let quoted_trigger = any().then_with_ctx(
-        any()
-            .and_is(quote_end.not())
-            .repeated()
-            .collect::<String>()
-            .then_ignore(quote_end),
-    );
+    let quoted_trigger = any()
+        .then_with_ctx(
+            any()
+                .and_is(quote_end.not())
+                .repeated()
+                .collect::<String>()
+                .then_ignore(quote_end),
+        )
+        .then_ignore(physical_whitespace);
+
+    let unquoted_trigger = any()
+        .and_is(physical_whitespace.not())
+        .repeated()
+        .collect::<String>()
+        .then_ignore(physical_whitespace);
 
     let snippet = text::keyword("snippet")
-        .then(text::whitespace())
-        .ignore_then(quoted_trigger);
+        .then(physical_whitespace)
+        .ignore_then(quoted_trigger.or(unquoted_trigger));
 
     let comment = just('#')
         .then(any().and_is(just('\n').not()).repeated())
-        .then(just('\n'));
+        .then(text::whitespace().at_least(1));
+
     comment
+        .padded()
         .repeated()
         .ignore_then(snippet)
         .repeated()
