@@ -2,7 +2,7 @@ use anyhow::anyhow;
 use chumsky::prelude::*;
 use thiserror::Error;
 
-use crate::SnippetFile;
+use crate::{Snippet, SnippetFile};
 
 pub fn deserialize(input: &str) -> anyhow::Result<SnippetFile> {
     parser()
@@ -31,44 +31,65 @@ pub fn deserialize(input: &str) -> anyhow::Result<SnippetFile> {
 )]
 struct ParseError<'a>(Vec<Simple<'a, char>>);
 
-fn parser<'a>() -> impl Parser<'a, &'a str, Vec<String>, extra::Err<Simple<'a, char>>> {
+fn parser<'a>() -> impl Parser<'a, &'a str, SnippetFile, extra::Err<Simple<'a, char>>> {
     // TODO: `priority n` commands
-    let physical_whitespace = text::whitespace().at_least(1);
-
     // UltiSnips has interesting quote rules: if the first character is the same one as the last
     // one, the trigger is quoted with that char as quote character
     // the quote character can be _anything_ though, and quoting is not necessary
     let quote_end = just('X') // placeholder char -- doesn't matter, will be immediately replaced
         .configure(|cfg, first_ch| cfg.seq(*first_ch));
-    let quoted_trigger = any()
-        .then_with_ctx(
-            any()
-                .and_is(quote_end.not())
-                .repeated()
-                .collect::<String>()
-                .then_ignore(quote_end),
-        )
-        .then_ignore(physical_whitespace);
+    let quoted_trigger = any::<_, extra::Err<Simple<char>>>().then_with_ctx(
+        any()
+            // the whitespace check is necessary to find out
+            // if that's really been at the end of the word and not in-between
+            // (yeah, that's actually not what UltiSnips does, but UltiSnips does RTL
+            // parsing anyway, we're merely trying to emulate it)
+            .and_is(quote_end.then(text::whitespace().at_least(1)).not())
+            .repeated()
+            .collect::<String>()
+            .then_ignore(quote_end),
+    );
 
     let unquoted_trigger = any()
-        .and_is(physical_whitespace.not())
+        .and_is(text::whitespace().at_least(1).not())
         .repeated()
-        .collect::<String>()
-        .then_ignore(physical_whitespace);
+        .collect::<String>();
 
     let snippet = text::keyword("snippet")
-        .then(physical_whitespace)
-        .ignore_then(quoted_trigger.or(unquoted_trigger));
+        .then(text::whitespace().at_least(1))
+        .ignore_then(quoted_trigger.or(unquoted_trigger))
+        .then_ignore(just('\n'))
+        .then(
+            any()
+                // interestingly chumsky seems to parse line-by-line implicitly, not expecting
+                // parsers to be interested about multiple lines
+                // "\nendsnippet" never hits because of that I think
+                // need to investigate that more
+                .and_is(text::keyword("endsnippet").not())
+                .repeated()
+                .collect::<String>()
+                .then_ignore(text::keyword("endsnippet")),
+        )
+        .map(|(trigger, replacement)| Snippet {
+            trigger,
+            replacement,
+            description: None,
+            options: None,
+            priority: None,
+        });
 
-    let comment = just('#')
-        .then(any().and_is(just('\n').not()).repeated())
-        .then(text::whitespace().at_least(1));
+    let everything_ignored = text::whitespace()
+        .exactly(1)
+        .ignored()
+        .or(just('#')
+            .then(any().and_is(just('\n').not()).repeated())
+            .then(just('\n'))
+            .ignored())
+        .repeated();
 
-    comment
-        .padded()
-        .repeated()
-        .ignore_then(snippet)
+    snippet
+        .padded_by(everything_ignored)
         .repeated()
         .collect::<Vec<_>>()
-        .then_ignore(any().repeated())
+        .map(|snippets| SnippetFile { snippets })
 }
