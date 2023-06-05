@@ -78,14 +78,11 @@ fn parser<'a>() -> impl Parser<'a, &'a str, SnippetFile, extra::Err<Simple<'a, c
             priority: None,
         });
 
-    let everything_ignored = text::whitespace()
-        .exactly(1)
-        .ignored()
-        .or(just('#')
-            .then(any().and_is(just('\n').not()).repeated())
-            .then(just('\n'))
-            .ignored())
-        .repeated();
+    let comment = just('#')
+        .then(any().and_is(just('\n').not()).repeated())
+        .then(just('\n'));
+
+    let everything_ignored = choice((text::whitespace().exactly(1), comment.ignored())).repeated();
 
     snippet
         .padded_by(everything_ignored)
