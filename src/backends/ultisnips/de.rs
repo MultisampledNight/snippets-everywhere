@@ -55,6 +55,10 @@ fn parser<'a>() -> impl Parser<'a, &'a str, SnippetFile, extra::Err<Simple<'a, c
         .repeated()
         .collect::<String>();
 
+    let description = todo();
+
+    let options = todo();
+
     let end = just('\n').then(text::keyword("endsnippet"));
 
     let snippet = text::keyword("snippet")
@@ -68,12 +72,21 @@ fn parser<'a>() -> impl Parser<'a, &'a str, SnippetFile, extra::Err<Simple<'a, c
                 .collect::<String>()
                 .then_ignore(end),
         )
-        .map(|(trigger, replacement)| Snippet {
-            trigger,
-            replacement,
-            description: None,
-            options: None,
-            priority: None,
+        .then(description.then(options.or_not()).or_not())
+        .map(|((trigger, replacement), maybe_more)| {
+            let (description, options) = match maybe_more {
+                Some((desc, None)) => (desc, None),
+                Some((desc, Some(opts))) => (desc, opts),
+                _ => (None, None),
+            };
+
+            Snippet {
+                trigger,
+                replacement,
+                description,
+                options,
+                priority: None,
+            }
         });
 
     let comment = just('#')
