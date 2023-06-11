@@ -33,9 +33,7 @@ struct ParseError<'a>(Vec<Simple<'a, char>>);
 
 fn parser<'a>() -> impl Parser<'a, &'a str, SnippetFile, extra::Err<Simple<'a, char>>> {
     // TODO: `priority n` commands
-    // UltiSnips has interesting quote rules: if the first character is the same one as the last
-    // one, the trigger is quoted with that char as quote character
-    // the quote character can be _anything_ though, and quoting is not necessary
+    // TODO: `extends` command, maybe not even necessary
     let quote_end = just('X') // placeholder char -- doesn't matter, will be immediately replaced
         .configure(|cfg, first_ch| cfg.seq(*first_ch));
     let quoted_trigger = any().then_with_ctx(
@@ -45,6 +43,7 @@ fn parser<'a>() -> impl Parser<'a, &'a str, SnippetFile, extra::Err<Simple<'a, c
             // (yeah, that's actually not what UltiSnips does, but UltiSnips does RTL
             // parsing anyway, we're merely trying to emulate it)
             .and_is(quote_end.then(text::whitespace().at_least(1)).not())
+            .and_is(text::newline().not())
             .repeated()
             .collect::<String>()
             .then_ignore(quote_end),
@@ -55,28 +54,37 @@ fn parser<'a>() -> impl Parser<'a, &'a str, SnippetFile, extra::Err<Simple<'a, c
         .repeated()
         .collect::<String>();
 
-    let description = todo();
+    // :h UltiSnips-basic-syntax doesn't give any more explanation on escaping or the like, apart
+    // from the description being always quoted. so we'll do exactly that
+    let description = any()
+        .and_is(just('"').not())
+        .repeated()
+        .collect::<String>()
+        .padded_by(just('"'));
 
-    let options = todo();
+    let options = just('A').map(|ch| ch.to_string());
 
-    let end = just('\n').then(text::keyword("endsnippet"));
+    let content = any::<_, extra::Err<Simple<char>>>()
+        .and_is(just('\n').then(text::keyword("endsnippet")).not())
+        .repeated()
+        .collect::<String>()
+        .then_ignore(just('\n').then(text::keyword("endsnippet")));
 
-    let snippet = text::keyword("snippet")
-        .then(text::whitespace().at_least(1))
+    let space = one_of(" \t").repeated().at_least(1);
+    let signature = text::keyword("snippet")
+        .then(space)
         .ignore_then(quoted_trigger.or(unquoted_trigger))
-        .then_ignore(just('\n'))
         .then(
-            any()
-                .and_is(end.clone().not())
-                .repeated()
-                .collect::<String>()
-                .then_ignore(end),
-        )
-        .then(description.then(options.or_not()).or_not())
-        .map(|((trigger, replacement), maybe_more)| {
+            space
+                .ignore_then(description.then(space.ignore_then(options).or_not()))
+                .or_not(),
+        );
+
+    let snippet = signature.then_ignore(just('\n')).then(content).map(
+        |((trigger, maybe_more), replacement)| {
             let (description, options) = match maybe_more {
-                Some((desc, None)) => (desc, None),
-                Some((desc, Some(opts))) => (desc, opts),
+                Some((desc, None)) => (Some(desc), None),
+                Some((desc, Some(opts))) => (Some(desc), Some(opts)),
                 _ => (None, None),
             };
 
@@ -87,13 +95,13 @@ fn parser<'a>() -> impl Parser<'a, &'a str, SnippetFile, extra::Err<Simple<'a, c
                 options,
                 priority: None,
             }
-        });
+        },
+    );
 
-    let comment = just('#')
-        .then(any().and_is(just('\n').not()).repeated())
-        .then(just('\n'));
+    let comment =
+        just::<_, _, extra::Err<Simple<char>>>('#').then(any().and_is(just('\n').not()).repeated());
 
-    let everything_ignored = choice((text::whitespace().exactly(1), comment.ignored())).repeated();
+    let everything_ignored = choice((text::whitespace().at_least(1), comment.ignored())).repeated();
 
     snippet
         .padded_by(everything_ignored)
