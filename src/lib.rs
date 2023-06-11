@@ -37,12 +37,12 @@ pub fn run() -> Result<()> {
     Ok(())
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
 pub struct SnippetFile {
     snippets: Vec<Snippet>,
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Default, PartialEq, Eq, Deserialize, Serialize)]
 pub struct Snippet {
     trigger: String,
     replacement: String,
