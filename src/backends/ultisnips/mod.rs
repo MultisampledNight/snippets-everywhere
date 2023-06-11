@@ -1,7 +1,9 @@
 mod de;
 mod ser;
 
-use crate::{Backend, SnippetFile};
+use crate::SnippetFile;
+
+use super::Backend;
 
 /// Backend for de- and serializing [UltiSnips] snippet files.
 ///

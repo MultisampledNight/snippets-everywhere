@@ -1,6 +1,7 @@
 use std::{collections::HashMap, fs, path::PathBuf};
 
 use anyhow::{anyhow, Context, Result};
+use backends::Backend;
 use clap::ArgMatches;
 use serde::{Deserialize, Serialize};
 
@@ -52,39 +53,6 @@ pub struct Snippet {
     description: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     priority: Option<i64>,
-}
-
-pub trait Backend: std::fmt::Debug {
-    /// Tries parsing the given input into _the IR:tm:_.
-    ///
-    /// # Panics
-    ///
-    /// Panics if the backend doesn't actually support deserializing. Note to the implementor:
-    /// Don't forget to also implement [`Backend::name_in`] to return [`None`] in that case.
-    fn deserialize(&self, input: &str) -> Result<SnippetFile>;
-
-    /// Tries writing _the IR:tm:_ into a string.
-    ///
-    /// # Panics
-    ///
-    /// Panics if the backend doesn't actually support serializing. Note to the implementor:
-    /// Don't forget to also implement [`Backend::name_out`] to return [`None`] in that case.
-    fn serialize(&self, snippets: &SnippetFile) -> Result<String>;
-
-    /// The name of this backend, ideally an all-lowercase, short identifier.
-    fn name(&self) -> &'static str;
-
-    /// Returns the input argument name for this backend. Returns [`None`] if this backend
-    /// doesn't support deserialization.
-    fn name_in(&self) -> Option<String> {
-        Some(format!("{}-in", self.name()))
-    }
-
-    /// Returns the input argument name for this backend. Returns [`None`] if this backend
-    /// doesn't support serialization.
-    fn name_out(&self) -> Option<String> {
-        Some(format!("{}-out", self.name()))
-    }
 }
 
 #[derive(Debug)]

@@ -1,6 +1,8 @@
 use anyhow::Context;
 
-use crate::{Backend, Snippet, SnippetFile};
+use crate::{Snippet, SnippetFile};
+
+use super::Backend;
 
 /// Backend for de- and serializing [Obsidian LaTeX suite] snippet files.
 ///
