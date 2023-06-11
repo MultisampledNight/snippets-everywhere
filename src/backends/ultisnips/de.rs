@@ -12,10 +12,6 @@ pub fn deserialize(input: &str) -> anyhow::Result<SnippetFile> {
         // can't directly return ParseError anyway since it contains a Simple with a lifetime
         // in a more serious project probably a custom/another error type would be better
         .map_err(|err| anyhow!(ParseError(err).to_string()))
-        .map(|x| {
-            dbg!(x);
-            todo!()
-        })
 }
 
 #[derive(Debug, Error)]
