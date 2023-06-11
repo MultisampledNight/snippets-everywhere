@@ -45,8 +45,12 @@ pub struct SnippetFile {
 pub struct Snippet {
     trigger: String,
     replacement: String,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
     options: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     description: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     priority: Option<i64>,
 }
 
