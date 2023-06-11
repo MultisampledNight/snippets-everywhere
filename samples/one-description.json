@@ -1,9 +1,1 @@
-[
-  {
-    "trigger": "opening",
-    "replacement": "Ah, so you're finally awake?",
-    "options": null,
-    "description": "Casually greet the player.",
-    "priority": null
-  }
-]
+[{"trigger":"opening","replacement":"Ah, so you're finally awake?","options":null,"description":"Casually greet the player.","priority":null}]
