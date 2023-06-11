@@ -64,7 +64,7 @@ fn parser<'a>() -> impl Parser<'a, &'a str, SnippetFile, extra::Err<Simple<'a, c
 
     let options = just('A').map(|ch| ch.to_string());
 
-    let content = any::<_, extra::Err<Simple<char>>>()
+    let content = any()
         .and_is(just('\n').then(text::keyword("endsnippet")).not())
         .repeated()
         .collect::<String>()
@@ -98,8 +98,7 @@ fn parser<'a>() -> impl Parser<'a, &'a str, SnippetFile, extra::Err<Simple<'a, c
         },
     );
 
-    let comment =
-        just::<_, _, extra::Err<Simple<char>>>('#').then(any().and_is(just('\n').not()).repeated());
+    let comment = just('#').then(any().and_is(just('\n').not()).repeated());
 
     let everything_ignored = choice((text::whitespace().at_least(1), comment.ignored())).repeated();
 
