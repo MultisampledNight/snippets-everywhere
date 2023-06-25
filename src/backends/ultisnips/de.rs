@@ -58,7 +58,7 @@ fn parser<'a>() -> impl Parser<'a, &'a str, SnippetFile, extra::Err<Simple<'a, c
         .collect::<String>()
         .padded_by(just('"'));
 
-    let options = just('A').map(|ch| ch.to_string());
+    let options = one_of("biwrtsmeA").repeated().collect::<String>();
 
     let content = any()
         .and_is(just('\n').then(text::keyword("endsnippet")).not())
