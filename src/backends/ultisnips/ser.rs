@@ -33,6 +33,7 @@ fn write_and_update_priority(output: &mut String, last_priority: &mut i64, prior
     if priority == *last_priority {
         return; // last priority still applies
     }
+    *last_priority = priority;
 
     writeln!(output, "priority {priority}").unwrap();
 }

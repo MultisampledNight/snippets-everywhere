@@ -1,0 +1,6 @@
+[
+  {trigger: "hi there!", replacement: "yes", priority: -3},
+  {trigger: "another one!", replacement: "yes", priority: -3},
+  {trigger: "absolute zero", replacement: "", priority: 0},
+  {trigger: "repeated?", replacement: "possibly", priority: 0},
+]
