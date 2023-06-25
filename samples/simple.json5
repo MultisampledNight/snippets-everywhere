@@ -3,5 +3,3 @@
   {trigger: "a", replacement: "b", options: "tA"},
   {trigger: "written", replacement: "conflict"},
 ]
-
-// vim: ft=json5
