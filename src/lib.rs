@@ -21,10 +21,15 @@ pub fn run() -> Result<()> {
             input.path.display()
         )
     })?;
-    let ir = input.backend.deserialize(&input_file)?;
+    let ir = input
+        .backend
+        .deserialize(&input_file)
+        .with_context(|| format!("could not deserialize `{}`", input.path.display()))?;
 
     for (path, backend) in outputs.mapping {
-        let repr = backend.serialize(&ir)?;
+        let repr = backend
+            .serialize(&ir)
+            .with_context(|| format!("could not serialize `{}`", path.display()))?;
         fs::write(&path, repr).with_context(|| {
             format!(
                 "error writing output for backend `{}` at path {}",
@@ -113,7 +118,7 @@ impl<'backends> BackendSelection<'backends> {
                 map
                     .insert(path.clone(), backend)
                     .map_or(Ok(map), |previous| Err(anyhow!(
-                        "both backends `{}` and `{}` were given {} as path to write to, they'd overwrite each other. please use different paths for ",
+                        "both backends `{}` and `{}` were given {} as path to write to, they'd overwrite each other. please use different paths for each output backend",
                         previous.name(),
                         backend.name(),
                         path.display(),

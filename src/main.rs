@@ -1,6 +1,5 @@
-fn main() {
-    if let Err(err) = snippets_everywhere::run() {
-        eprintln!("{err}");
-        std::process::exit(1);
-    }
+use anyhow::Result;
+
+fn main() -> Result<()> {
+    snippets_everywhere::run()
 }
