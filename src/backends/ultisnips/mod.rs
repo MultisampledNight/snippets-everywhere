@@ -4,6 +4,8 @@ mod tests;
 mod de;
 mod ser;
 
+use anyhow::Context;
+
 use crate::SnippetFile;
 
 use super::Backend;
@@ -20,7 +22,7 @@ impl Backend for UltiSnips {
     }
 
     fn deserialize(&self, input: &str) -> anyhow::Result<SnippetFile> {
-        de::deserialize(input)
+        de::deserialize(input).context("error while parsing UltiSnips snippets")
     }
 
     fn serialize(&self, snippets: &SnippetFile) -> anyhow::Result<String> {
