@@ -1,3 +1,5 @@
+use std::num::ParseIntError;
+
 use anyhow::Result;
 use itertools::Itertools;
 use thiserror::Error;
@@ -33,13 +35,15 @@ pub fn deserialize(input: &str) -> Result<SnippetFile> {
                 );
                 relevant_lines.push(lines_iter.next().unwrap().to_string());
 
-                let snippet = parse_snippet(&relevant_lines, &mut current_priority)?;
+                let snippet = parse_snippet(&relevant_lines, current_priority)?;
                 snippets.push(snippet);
             }
+            Some("priority") => current_priority = parse_priority(line)?,
             Some(unknown) => {
                 return Err(ParseError::UnknownDirective {
                     directive: unknown.to_string(),
-                }.into())
+                }
+                .into())
             }
         }
     }
@@ -51,9 +55,23 @@ pub fn deserialize(input: &str) -> Result<SnippetFile> {
 enum ParseError {
     #[error("unknown directive: `{directive}`")]
     UnknownDirective { directive: String },
+    #[error("no number after `priority` directive")]
+    MissingPriorityNumber,
+    #[error("tried to parse number in `{subject}` but failed: {err}")]
+    ParsePriorityNumber { subject: String, err: ParseIntError },
 }
 
-fn parse_snippet(lines: &[String], current_priority: &mut i64) -> Result<Snippet> {
-    dbg!(lines);
+fn parse_snippet(lines: &[String], current_priority: i64) -> Result<Snippet> {
     todo!()
+}
+
+fn parse_priority(line: &str) -> Result<i64, ParseError> {
+    line.split_whitespace()
+        .nth(1)
+        .ok_or(ParseError::MissingPriorityNumber)?
+        .parse()
+        .map_err(|err| ParseError::ParsePriorityNumber {
+            subject: line.to_string(),
+            err,
+        })
 }
