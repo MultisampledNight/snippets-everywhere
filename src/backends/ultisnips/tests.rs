@@ -48,7 +48,7 @@ endsnippet
 #[test]
 fn deserialize_desc_and_opts() {
     let input = r#"
-snippet written "" Aw
+snippet written "long description" Aw
 replaced
 endsnippet
     "#;
@@ -60,7 +60,7 @@ endsnippet
             snippets: vec![Snippet {
                 trigger: "written".to_string(),
                 replacement: "replaced".to_string(),
-                description: Some(String::new()),
+                description: Some("long description".to_string()),
                 options: Some("Aw".to_string()),
                 ..Default::default()
             }],

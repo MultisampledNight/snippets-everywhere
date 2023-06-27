@@ -57,6 +57,8 @@ enum ParseError {
     UnknownDirective { directive: String },
     #[error("found no trigger after `snippet`")]
     MissingSnippetTrigger,
+    #[error("description consists of only one unmatched quote")]
+    UnmatchedDescQuote,
     #[error("found no number after `priority` directive")]
     MissingPriorityNumber,
     #[error("tried to parse number in `{subject}` but failed: {err}")]
@@ -93,12 +95,30 @@ fn parse_snippet(lines: &[String], priority: Option<i64>) -> Result<Snippet, Par
 
             // is a description there?
             if parts.last().unwrap().ends_with('"') {
-                let _accumulated_desc = String::new();
-                todo!()
+                // maybe need to rev again at the end
+                let parts_of_desc = parts
+                    .iter()
+                    .rev()
+                    .take_while_inclusive(|part| !part.starts_with('"'))
+                    .collect::<Vec<_>>();
+                let removed_part_count = parts_of_desc.len();
+
+                if parts_of_desc.len() == 1 && parts_of_desc[0].len() == 1 {
+                    return Err(ParseError::UnmatchedDescQuote);
+                }
+
+                let quoted_desc = parts_of_desc.into_iter().rev().format(" ").to_string();
+                // no need for grapheme magic, the only allowed quote character is "
+                description = Some(quoted_desc[1..quoted_desc.len() - 1].to_string());
+
+                for _ in 0..removed_part_count {
+                    parts.pop();
+                }
+
             }
 
             // then everything remaining will be the trigger
-            if parts.len() >= 2 {
+            if parts.len() >= 3 {
                 // quoted
                 // actually according to :h UltiSnips-snippet-options, both single-word and
                 // multi-word triggers can be quoted, but the code only implements the latter
