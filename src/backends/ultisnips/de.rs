@@ -107,18 +107,7 @@ fn extract_signature(line: &str) -> Result<Snippet, ParseError> {
             description = maybe_parse_description(&mut parts)?;
 
             // then everything remaining will be the trigger
-            if parts.len() >= 3 {
-                // quoted
-                // actually according to :h UltiSnips-snippet-options, both single-word and
-                // multi-word triggers can be quoted, but the code only implements the latter
-                // (and checks for regex, too). so that's emulated here
-                let quoted = parts[1..].iter().format(" ").to_string();
-                let graphemes: Vec<_> = quoted.graphemes(true).collect();
-                trigger = graphemes[1..graphemes.len() - 1].iter().copied().collect();
-            } else {
-                // unquoted
-                trigger = parts[1].to_string();
-            }
+            trigger = parse_trigger(&mut parts, &options);
         }
     }
 
@@ -164,6 +153,26 @@ fn maybe_parse_description(parts: &mut Vec<&str>) -> Result<Option<String>, Pars
 
     // no need for grapheme magic, the only allowed quote character is "
     Ok(Some(quoted_desc[1..quoted_desc.len() - 1].to_string()))
+}
+
+fn parse_trigger(parts: &mut Vec<&str>, options: &Option<String>) -> String {
+    let is_regex = options
+        .as_ref()
+        .map(|opts| opts.contains('r'))
+        .unwrap_or(false);
+
+    if parts.len() >= 3 || is_regex {
+        // quoted
+        // actually according to :h UltiSnips-snippet-options, both single-word and
+        // multi-word triggers can be quoted, but the code only implements the latter
+        // (and checks for regex, too). so that's emulated here
+        let quoted = parts[1..].iter().format(" ").to_string();
+        let graphemes: Vec<_> = quoted.graphemes(true).collect();
+        graphemes[1..graphemes.len() - 1].iter().copied().collect()
+    } else {
+        // unquoted
+        parts.pop().unwrap().to_string()
+    }
 }
 
 fn parse_priority(line: &str) -> Result<i64, ParseError> {
