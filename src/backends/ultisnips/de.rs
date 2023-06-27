@@ -67,10 +67,22 @@ enum ParseError {
 
 fn parse_snippet(lines: &[String], priority: Option<i64>) -> Result<Snippet, ParseError> {
     // basically snippet/source/file/ulti_snips.py in the UltiSnips repo ported
-    // first parsing the signature `snippet trigger [ description [ options ] ]`
-    // remember: description and options are optional, trigger may be quoted weirdly
     let first_line = lines.get(0).expect("caller passing lines to parse");
-    let mut parts: Vec<_> = first_line.split_whitespace().collect();
+    let signature = extract_signature(first_line)?;
+
+    let replacement = lines[1..lines.len() - 1].iter().format("\n").to_string();
+
+    Ok(Snippet {
+        replacement,
+        priority,
+        ..signature
+    })
+}
+
+fn extract_signature(line: &str) -> Result<Snippet, ParseError> {
+    // the subject to parse is `snippet <trigger> [ "<description>" [ <options> ] ]`
+    // remember: description and options are optional, trigger may be quoted weirdly
+    let mut parts: Vec<_> = line.split_whitespace().collect();
 
     let trigger;
     let mut description = None;
@@ -89,33 +101,10 @@ fn parse_snippet(lines: &[String], priority: Option<i64>) -> Result<Snippet, Par
             // possibly just quoted trigger
 
             // are options there?
-            if !parts.last().unwrap().ends_with('"') && parts[parts.len() - 2].ends_with('"') {
-                options = parts.pop().map(|opts| opts.to_string());
-            }
+            options = maybe_parse_options(&mut parts);
 
             // is a description there?
-            if parts.last().unwrap().ends_with('"') {
-                // maybe need to rev again at the end
-                let parts_of_desc = parts
-                    .iter()
-                    .rev()
-                    .take_while_inclusive(|part| !part.starts_with('"'))
-                    .collect::<Vec<_>>();
-                let removed_part_count = parts_of_desc.len();
-
-                if parts_of_desc.len() == 1 && parts_of_desc[0].len() == 1 {
-                    return Err(ParseError::UnmatchedDescQuote);
-                }
-
-                let quoted_desc = parts_of_desc.into_iter().rev().format(" ").to_string();
-                // no need for grapheme magic, the only allowed quote character is "
-                description = Some(quoted_desc[1..quoted_desc.len() - 1].to_string());
-
-                for _ in 0..removed_part_count {
-                    parts.pop();
-                }
-
-            }
+            description = maybe_parse_description(&mut parts)?;
 
             // then everything remaining will be the trigger
             if parts.len() >= 3 {
@@ -133,15 +122,48 @@ fn parse_snippet(lines: &[String], priority: Option<i64>) -> Result<Snippet, Par
         }
     }
 
-    let replacement = lines[1..lines.len() - 1].iter().format("\n").to_string();
-
     Ok(Snippet {
         trigger,
-        replacement,
+        replacement: String::new(),
         options,
         description,
-        priority,
+        priority: None,
     })
+}
+
+fn maybe_parse_options(parts: &mut Vec<&str>) -> Option<String> {
+    if !parts.last().unwrap().ends_with('"') && parts[parts.len() - 2].ends_with('"') {
+        parts.pop().map(|opts| opts.to_string())
+    } else {
+        None
+    }
+}
+
+fn maybe_parse_description(parts: &mut Vec<&str>) -> Result<Option<String>, ParseError> {
+    if !parts.last().unwrap().ends_with('"') {
+        return Ok(None);
+    }
+
+    // maybe need to rev again at the end
+    let parts_of_desc = parts
+        .iter()
+        .rev()
+        .take_while_inclusive(|part| !part.starts_with('"'))
+        .collect::<Vec<_>>();
+    let removed_part_count = parts_of_desc.len();
+
+    if parts_of_desc.len() == 1 && parts_of_desc[0].len() == 1 {
+        return Err(ParseError::UnmatchedDescQuote);
+    }
+
+    let quoted_desc = parts_of_desc.into_iter().rev().format(" ").to_string();
+
+    for _ in 0..removed_part_count {
+        parts.pop();
+    }
+
+    // no need for grapheme magic, the only allowed quote character is "
+    Ok(Some(quoted_desc[1..quoted_desc.len() - 1].to_string()))
 }
 
 fn parse_priority(line: &str) -> Result<i64, ParseError> {
