@@ -34,7 +34,7 @@ python -c 'import json, pathlib; print(json.loads(pathlib.Path("$YOUR_VAULT_PATH
 ## Caveats
 
 - The [UltiSnips] snippet _parser_ as triggered through using `--ultisnips-in` tries to replicate the parsing of UltiSnips itself as closely as reasonably possible. This also includes the same surprising behaviors: `"wow"` as trigger is parsed as `"wow"`, unquoted, but `"wow more"` is parsed as `wow more`, quoted.
-- Also, parsing and following `priority` and `extends` directives in the [UltiSnips] parser isn't implemented. Would be easy to add, though.
+- Parsing and following `extends` directives in the [UltiSnips] parser isn't implemented. Would be easy to add, though.
 - Comments are not preserved, and not even parsed by the input backends, just skipped.
 - The [OLS] output is very condensed, and not pretty printed. If you want or need pretty printing, you can throw it through `python -m json.tool`.
 
