@@ -33,22 +33,7 @@ python -c 'import json, pathlib; print(json.loads(pathlib.Path("$YOUR_VAULT_PATH
 
 ## Caveats
 
-- The [UltiSnips] snippet _parser_ as triggered through using `--ultisnips-in` is slightly buggy and a bit more lenient than what [UltiSnips] itself would accept. The buginess mostly stems from the fact that [UltiSnips] allows any character as quote, but internally actually performs RTL parsing, which is hard to emulate using a PEG
-
-  <details>
-  Let's say you have this wonderfully slightly useless snippet:
-
-  ```snippets
-  snippet wall "Yeah." Aw
-  door
-  endsnippet
-  ```
-
-  What would you expect this to be parsed as? Well, [UltiSnips] parses this as `wall` as trigger, `Yeah.` as description and `Aw` as options, but the parser in this repo currently parses this as `all "Yeah." A` as trigger, with no description and option, since `w` is a valid quote character. And this is difficult to solve correctly. [UltiSnips] just takes the last two words it sees, figures out if they are description and option, and searches for the beginning of the description appropiately, then ignoring them when finally parsing the trigger.
-
-  But in a PEG, this is... weird. I believe the only way to meaningfully emulate this is by checking at each character in the trigger if the following text would make sense as description and options, too, but that's not done at the moment, since I would want a clean solution.
-  </details>
-
+- The [UltiSnips] snippet _parser_ as triggered through using `--ultisnips-in` tries to replicate the parsing of UltiSnips itself as closely as reasonably possible. This also includes the same surprising behaviors: `"wow"` as trigger is parsed as `"wow"`, unquoted, but `"wow more"` is parsed as `wow more`, quoted.
 - Also, parsing and following `priority` and `extends` directives in the [UltiSnips] parser isn't implemented. Would be easy to add, though.
 - Comments are not preserved, and not even parsed by the input backends, just skipped.
 - The [OLS] output is very condensed, and not pretty printed. If you want or need pretty printing, you can throw it through `python -m json.tool`.
